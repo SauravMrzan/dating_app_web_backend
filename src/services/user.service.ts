@@ -19,7 +19,7 @@ export class UserService {
       throw new HttpError(403, "Username already in use");
     }
     // hash password
-    const hashedPassword = await bcryptjs.hash(data.password, 10); // 10 - complexity
+    const hashedPassword = await bcryptjs.hash  (data.password, 10); // 10 - complexity
     data.password = hashedPassword;
 
     // create user
