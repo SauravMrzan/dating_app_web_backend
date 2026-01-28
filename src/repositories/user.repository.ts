@@ -1,7 +1,6 @@
 import { UserModel, IUser } from "../models/user.model";
 export interface IUserRepository {
   getUserByEmail(email: string): Promise<IUser | null>;
-  getUserByUsername(username: string): Promise<IUser | null>;
   // Additional
   // 5 common database queries for entity
   createUser(userData: Partial<IUser>): Promise<IUser>;
@@ -20,10 +19,6 @@ export class UserRepository implements IUserRepository {
     const user = await UserModel.findOne({ email: email });
     return user;
   }
-  async getUserByUsername(username: string): Promise<IUser | null> {
-    const user = await UserModel.findOne({ username: username });
-    return user;
-  }
 
   async getUserById(id: string): Promise<IUser | null> {
     // UserModel.findOne({ "_id": id });
@@ -36,13 +31,13 @@ export class UserRepository implements IUserRepository {
   }
   async updateUser(
     id: string,
-    updateData: Partial<IUser>
+    updateData: Partial<IUser>,
   ): Promise<IUser | null> {
     // UserModel.updateOne({ _id: id }, { $set: updateData });
     const updatedUser = await UserModel.findByIdAndUpdate(
       id,
       updateData,
-      { new: true } // return the updated document
+      { new: true }, // return the updated document
     );
     return updatedUser;
   }

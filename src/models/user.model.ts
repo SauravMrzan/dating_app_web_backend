@@ -1,9 +1,8 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { UserType } from "../types/user.type";
 
-const UserSchema: Schema = new Schema<UserType>(
+const UserSchema: Schema = new Schema<IUser>(
   {
-    username: { type: String, required: true, unique: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
 
@@ -51,7 +50,7 @@ const UserSchema: Schema = new Schema<UserType>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export interface IUser extends UserType, Document {

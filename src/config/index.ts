@@ -30,6 +30,6 @@ export const ALLOWED_ORIGINS: string[] = process.env.CORS_ORIGIN
   : [
       "http://localhost:5000",
       "http://localhost:5001",
-      "http://192.168.0.102:5000",
+      "http://192.168.1.171:5000", // Add your current IP here
       "http://10.0.2.2:5000",
     ];
