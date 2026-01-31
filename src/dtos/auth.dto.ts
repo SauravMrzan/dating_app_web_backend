@@ -15,6 +15,7 @@ export const CreateUserDTO = UserSchema.pick({
   preferredCulture: true,
   minPreferredAge: true,
   maxPreferredAge: true,
+  profilePicture: true,
 });
 // .extend({
 //   confirmPassword: z.string().min(6).optional(),
@@ -35,3 +36,8 @@ export const LoginUserDTO = z.object({
 });
 
 export type LoginUserDTO = z.infer<typeof LoginUserDTO>;
+
+
+export const updateUserDTO = CreateUserDTO.partial();
+
+export type UpdateUserDTO = z.infer<typeof updateUserDTO>;

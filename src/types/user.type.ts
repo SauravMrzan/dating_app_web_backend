@@ -31,6 +31,13 @@ export const UserSchema = z.object({
   minPreferredAge: z.number().int().positive().optional(),
   maxPreferredAge: z.number().int().positive().optional(),
 
+  profilePicture: z
+    .string()
+    .url("Invalid URL format")
+    .optional()
+    .nullable()
+    .or(z.literal("")), // Handles empty strings from web forms
+
   // System
   role: z.enum(["user", "admin"]).default("user"),
 });

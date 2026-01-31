@@ -47,6 +47,7 @@ const UserSchema: Schema = new Schema<IUser>(
       enum: ["user", "admin"],
       default: "user",
     },
+    profilePicture: { type: String, required: false },
   },
   {
     timestamps: true,
@@ -55,8 +56,19 @@ const UserSchema: Schema = new Schema<IUser>(
 
 export interface IUser extends UserType, Document {
   _id: mongoose.Types.ObjectId;
-  createdAt: Date;
-  updatedAt: Date;
+  fullName: string;
+  email: string;
+  password: string;
+  gender: 'Male' | 'Female' | 'Other';
+  dateOfBirth: Date; 
+  phone: string;
+  culture: 'Brahmin' | 'Chhetri' | 'Newar' | 'Rai' | 'Magar' | 'Gurung';
+  interestedIn: 'Male' | 'Female' | 'Everyone';
+  preferredCulture: Array<'Brahmin' | 'Chhetri' | 'Newar' | 'Rai' | 'Magar' | 'Gurung'>;
+  minPreferredAge: number;
+  maxPreferredAge: number;
+  role: 'user' | 'admin';
+  profilePicture?: string; 
 }
 
 export const UserModel = mongoose.model<IUser>("User", UserSchema);
