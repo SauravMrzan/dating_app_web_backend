@@ -98,40 +98,59 @@
     /**
      * Update user profile information
      */
-    async updateUserProfile(req: Request, res: Response) {
-      try {
-        const userId = (req as any).user?._id;
-        if (!userId) {
-          return res.status(401).json({ 
-            success: false, 
-            message: "Unauthorized" 
-          });
-        }
-
-        const parsedData = updateUserDTO.safeParse(req.body);
-        if (!parsedData.success) {
-          return res.status(400).json({ 
-            success: false, 
-            errors: parsedData.error.issues 
-          });
-        }
-
-        // If a file was uploaded via Multer, add the path to the update data
-        if (req.file) {
-          parsedData.data.profilePicture = `/uploads/${req.file.filename}`;
-        }
-
-        const updatedUser = await authService.updateUser(userId, parsedData.data);
-        return res.status(200).json({
-          success: true,
-          data: updatedUser,
-          message: "User profile updated successfully",
-        });
-      } catch (error: any) {
-        return res.status(error.statusCode || 500).json({
-          success: false,
-          message: error.message || "Internal Server Error",
+    /**
+   * Update user profile information - Optimized for MannMilap Flutter App
+   */
+  async updateUserProfile(req: Request, res: Response) {
+    try {
+      // 1. Get User ID (Check both _id and id depending on your middleware)
+      const userId = (req as any).user?._id || (req as any).user?.id;
+      if (!userId) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Unauthorized" 
         });
       }
+
+      // 2. Validate text fields (fullName, dob) using Zod
+      // We use safeParse so the app doesn't crash on validation errors
+      const parsedData = updateUserDTO.safeParse(req.body);
+      
+      if (!parsedData.success) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Validation failed",
+          errors: parsedData.error.flatten() 
+        });
+      }
+
+      // 3. Prepare the update object
+      // We spread the validated data from Zod
+      const updateData = { ...parsedData.data };
+
+      // 4. Handle the File (The "profilePicture")
+      // If Multer successfully uploaded a file, it will be in req.file
+      if (req.file) {
+        // We save the relative path that the static middleware can serve
+        updateData.profilePicture = `uploads/${req.file.filename}`;
+      }
+
+      // 5. Call your Service to update MongoDB
+      const updatedUser = await authService.updateUser(userId, updateData);
+
+      // 6. Return Response matching your friend's structure
+      return res.status(200).json({
+        success: true,
+        message: "User profile updated successfully",
+        user: updatedUser, // Flutter expects 'user' based on your friend's code
+      });
+
+    } catch (error: any) {
+      console.error("UPDATE PROFILE ERROR:", error);
+      return res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message || "Internal Server Error",
+      });
     }
+  }
   }

@@ -12,21 +12,24 @@ import { PORT } from "./config";
 
 const app: Application = express();
 
-// 🔥 REQUIRED for mobile + rate-limit
+// REQUIRED for mobile + rate-limit
 app.set("trust proxy", 1);
 
 // 1. CONNECT TO DATABASE
 connectDatabase();
 
+// 2. MIDDLEWARE & SECURITY
+app.use(morgan("dev")); // Keeps your terminal logs pretty
+app.use(helmet({
+  crossOriginResourcePolicy: false, // REQUIRED: otherwise Flutter cannot load images
+}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// 4. CORS CONFIGURATION
+// 3. CORS CONFIGURATION
 app.use(
   cors({
     origin: (origin, callback) => {
-      // 💡 IMPORTANT: Flutter/Mobile apps often send 'null' or undefined origin.
-      // We must allow these to let the request reach the controller.
       if (!origin || ALLOWED_ORIGINS.includes(origin)) {
         callback(null, true);
       } else {
@@ -37,30 +40,25 @@ app.use(
   }),
 );
 
+// 4. STATIC FILES (THE FIX)
+// We only need this ONE line. It maps /uploads URL to the ../uploads folder.
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-// 5. ROBUST SANITIZATION MIDDLEWARE
-// Prevents NoSQL Injection and XSS without breaking Date/Number objects
+// 5. SANITIZATION MIDDLEWARE
 app.use((req: Request, res: Response, next: NextFunction) => {
   const skipFields = ["email", "password", "profilePicture"];
 
   const sanitize = (obj: any): any => {
     if (obj && typeof obj === "object" && !Array.isArray(obj)) {
       for (const key in obj) {
-        // Skip specific fields OR values that aren't strings (like Dates/Numbers)
         if (skipFields.includes(key) || typeof obj[key] !== "string") {
           continue;
         }
-
         let value = obj[key];
-        // 1. Anti-NoSQL Injection (removes $)
-        value = value.replace(/\$/g, "");
-
-        // 2. Anti-XSS (removes < > tags) - Skip for emails
+        value = value.replace(/\$/g, ""); // Anti-NoSQL
         if (!value.includes("@")) {
-          value = value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          value = value.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Anti-XSS
         }
-
         obj[key] = value;
       }
     }
@@ -73,8 +71,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // 6. GLOBAL RATE LIMITER
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per window
+  windowMs: 15 * 60 * 1000, 
+  max: 100, 
   message: {
     success: false,
     message: "Too many requests, please try again later.",
@@ -84,31 +82,23 @@ const limiter = rateLimit({
 // 7. ROUTES
 app.use("/api/auth", authRoutes);
 app.use("/api/", limiter);
-// Health Check Route
+
 app.get("/", (req, res) => {
   res.status(200).json({ success: true, message: "🚀 MannMilap API is live" });
 });
-
-// Static files (for profile pictures)
-app.use("/public", express.static(path.join(__dirname, "../uploads")));
 
 // 8. GLOBAL ERROR HANDLER
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const status = err.statusCode || 500;
   console.error(`[Error] ${err.message}`);
-
   res.status(status).json({
     success: false,
     message: err.message || "Internal Server Error",
-    // Only show stack trace in development mode
-    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
   });
 });
 
 // 9. SERVER INITIALIZATION
-
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(
-    `Server is running and reachable at http://192.168.0.102:${PORT}`,
-  );
+  console.log(`Server is running at http://192.168.0.102:${PORT}`);
+  console.log(`Network: ${PORT} (Use this for Mobile/Flutter)`);
 });

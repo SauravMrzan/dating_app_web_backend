@@ -56,18 +56,17 @@ export class AuthService {
     const token = jwt.sign(
       { id: user._id, email: user.email }, 
       JWT_SECRET, 
-      { expiresIn: "1d" }
+      { expiresIn: "30d" } // Increased to 30 days so users stay logged in
     );
 
     return {
       token,
       user: {
-        id: user._id, // Matches Flutter's AuthApiModel 'id'
+        id: user._id, 
         email: user.email,
         fullName: user.fullName,
         gender: user.gender,
-        culture: user.culture,
-        dateOfBirth: user.dateOfBirth,
+        dob: user.dateOfBirth, // Returning 'dob' for Flutter
         profilePicture: user.profilePicture,
       },
     };
@@ -90,38 +89,37 @@ export class AuthService {
     };
   }
 
-  async updateUser(userId: string, data: UpdateUserDTO) {
+  async updateUser(userId: string, data: any) {
     const user = await userRepository.getUserById(userId);
     if (!user) throw new HttpError(404, "User not found");
 
+    // 1. Handle Email uniqueness
     if (data.email && user.email !== data.email) {
       const emailExists = await userRepository.getUserByEmail(data.email);
       if (emailExists) throw new HttpError(409, "Email already exists");
     }
 
+    // 2. Handle Password Hashing
     if (data.password) {
       data.password = await bcrypt.hash(data.password, 10);
     }
 
-    if (data.preferredCulture !== undefined) {
-      if (Array.isArray(data.preferredCulture)) {
-        data.preferredCulture = data.preferredCulture.filter(Boolean) as IUser["preferredCulture"];
-      } else if (data.preferredCulture) {
-        data.preferredCulture = [data.preferredCulture] as IUser["preferredCulture"];
-      } else {
-        data.preferredCulture = [];
-      }
+    // 3. Map Flutter's 'dob' to MongoDB's 'dateOfBirth'
+    if (data.dob) {
+      data.dateOfBirth = data.dob;
     }
 
-    const updatedUser = await userRepository.updateUser(userId, data as Partial<IUser>);
+    // 4. Update in Repository
+    const updatedUser = await userRepository.updateUser(userId, data);
     if (!updatedUser) throw new HttpError(500, "Failed to update user");
 
+    // 5. Return formatted object for the Controller
     return {
       id: updatedUser._id,
       fullName: updatedUser.fullName,
       email: updatedUser.email,
       gender: updatedUser.gender,
-      culture: updatedUser.culture,
+      dob: updatedUser.dateOfBirth, // Ensure Flutter gets 'dob'
       profilePicture: updatedUser.profilePicture,
     };
   }
