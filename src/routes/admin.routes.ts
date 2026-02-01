@@ -9,11 +9,6 @@ const adminController = new AdminController();
 // Multer setup for Admin to handle profile pictures
 const upload = multer({ dest: 'uploads/' });
 
-/** * ACTIVITY-BASED LEARNING: 
- * Notice how every route below has 'protect' and 'isAdmin'.
- * This fulfills your task: "Only admin role can access the above mentioned api endpoints."
- */
-
 // 1. GET /api/admin/users -> List all users
 router.get("/users", protect, isAdmin, (req, res) => adminController.getAllUsers(req, res));
 
