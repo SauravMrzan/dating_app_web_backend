@@ -1,5 +1,4 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { UserType } from "../types/user.type";
 
 const UserSchema: Schema = new Schema<IUser>(
   {
@@ -54,7 +53,7 @@ const UserSchema: Schema = new Schema<IUser>(
   },
 );
 
-export interface IUser extends UserType, Document {
+export interface IUser extends mongoose.Document {
   _id: mongoose.Types.ObjectId;
   fullName: string;
   email: string;

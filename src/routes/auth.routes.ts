@@ -10,8 +10,10 @@ const authController = new AuthController();
 router.post("/register", authController.register);
 router.post("/login", authController.login);
 
-// 2. Protected Routes (Require Login)
-router.get("/whoami", authorizedMiddleware, authController.getUserProfile);
+// 2. Protected Routes (Require Login)// Correct the mapping
+router.get("/whoami", authorizedMiddleware, (req, res) =>
+  authController.getUserProfile(req, res),
+);
 
 // 3. Update Profile Route
 // Logic: First check if user is logged in, then handle the 'profilePicture' file, then run controller

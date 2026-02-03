@@ -9,22 +9,24 @@ import { connectDatabase } from "./database/mongodb";
 import { ALLOWED_ORIGINS } from "./config";
 import authRoutes from "./routes/auth.routes";
 import { PORT } from "./config";
+import adminRoutes from "./routes/admin.routes";
 
 const app: Application = express();
-
-// REQUIRED for mobile + rate-limit
-app.set("trust proxy", 1);
 
 // 1. CONNECT TO DATABASE
 connectDatabase();
 
 // 2. MIDDLEWARE & SECURITY
 app.use(morgan("dev")); // Keeps your terminal logs pretty
-app.use(helmet({
-  crossOriginResourcePolicy: false, // REQUIRED: otherwise Flutter cannot load images
-}));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false, // REQUIRED: otherwise Flutter cannot load images
+  }),
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // 3. CORS CONFIGURATION
 app.use(
@@ -71,8 +73,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // 6. GLOBAL RATE LIMITER
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 100, 
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: {
     success: false,
     message: "Too many requests, please try again later.",
@@ -80,8 +82,9 @@ const limiter = rateLimit({
 });
 
 // 7. ROUTES
-app.use("/api/auth", authRoutes);
 app.use("/api/", limiter);
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get("/", (req, res) => {
   res.status(200).json({ success: true, message: "🚀 MannMilap API is live" });

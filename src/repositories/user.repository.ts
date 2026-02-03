@@ -23,9 +23,9 @@ export class UserRepository implements IUserRepository {
    * Used during Login and Registration checks
    */
   async getUserByEmail(email: string): Promise<IUser | null> {
-    // We use .select("+password") just in case your model 
+    // We use .select("+password") just in case your model
     // has the password field hidden by default.
-    return await UserModel.findOne({ email: email }).select("+password");
+    return await UserModel.findOne({ email: email }).select("+password +role");
   }
 
   /**
@@ -50,14 +50,10 @@ export class UserRepository implements IUserRepository {
     id: string,
     updateData: Partial<IUser>,
   ): Promise<IUser | null> {
-    return await UserModel.findByIdAndUpdate(
-      id,
-      updateData,
-      { 
-        new: true,           // Return the document AFTER update
-        runValidators: true  // Ensure Zod/Mongoose rules still apply
-      }
-    );
+    return await UserModel.findByIdAndUpdate(id, updateData, {
+      new: true, // Return the document AFTER update
+      runValidators: true, // Ensure Zod/Mongoose rules still apply
+    });
   }
 
   /**
