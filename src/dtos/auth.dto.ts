@@ -9,12 +9,12 @@ export const CreateUserDTO = z.object({
     .min(10, "Valid phone number required")
     .regex(/^[0-9+]+$/, "Phone must contain only numbers and +"),
   gender: z.enum(["Male", "Female", "Other"]),
+
+  // ✅ Accept string dates and coerce to Date
   dateOfBirth: z.coerce.date().refine((date) => {
     const today = new Date();
     let age = today.getFullYear() - date.getFullYear();
     const monthDiff = today.getMonth() - date.getMonth();
-
-    // Precise age calculation
     if (
       monthDiff < 0 ||
       (monthDiff === 0 && today.getDate() < date.getDate())
@@ -24,17 +24,22 @@ export const CreateUserDTO = z.object({
     return age >= 18;
   }, "You must be at least 18 years old"),
 
-  // 3. Fix Culture: Should be a string to match your AuthService logic
+  // ✅ Culture must be one of the defined enums
   culture: z.enum(["Brahmin", "Chhetri", "Newar", "Rai", "Magar", "Gurung"]),
+
+  // ✅ PreferredCulture always an array
   preferredCulture: z
     .array(z.enum(["Brahmin", "Chhetri", "Newar", "Rai", "Magar", "Gurung"]))
     .default([]),
-  // 5. Fix Ages: Coerce "25" -> 25
+
+  // ✅ Coerce numbers from strings
   minPreferredAge: z.coerce.number().min(18).default(18),
   maxPreferredAge: z.coerce.number().max(100).default(99),
 
-  // 6. Metadata
+  // ✅ Optional profile picture
   profilePicture: z.string().optional().nullable(),
+
+  // ✅ Role
   role: z.enum(["user", "admin"]).default("user"),
 });
 
@@ -48,7 +53,6 @@ export const LoginUserDTO = z.object({
 export type LoginUserDTO = z.infer<typeof LoginUserDTO>;
 
 // --- Update DTO ---
-// We use partial so all fields become optional for updates
 export const updateUserDTO = CreateUserDTO.partial().extend({
   role: z.enum(["user", "admin"]).optional(),
 });
