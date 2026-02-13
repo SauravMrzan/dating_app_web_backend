@@ -1,23 +1,7 @@
 import mongoose, { Schema } from "mongoose";
-export interface IUser extends mongoose.Document {
-  _id: mongoose.Types.ObjectId;
-  fullName: string;
-  email: string;
-  password: string;
-  dateOfBirth: Date;
-  gender: "Male" | "Female" | "Other";
-  phone: string;
-  culture: "Brahmin" | "Chhetri" | "Newar" | "Rai" | "Magar" | "Gurung";
-  interestedIn: "Male" | "Female" | "Everyone";
-  preferredCulture: Array<
-    "Brahmin" | "Chhetri" | "Newar" | "Rai" | "Magar" | "Gurung"
-  >;
-  minPreferredAge: number;
-  maxPreferredAge: number;
-  role: "user" | "admin";
-  profilePicture?: string;
-}
-const UserSchema: Schema = new Schema<IUser>(
+import { IUser } from "../models/user.model";
+
+const UserSchema = new Schema<IUser>(
   {
     fullName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -48,4 +32,6 @@ const UserSchema: Schema = new Schema<IUser>(
   { timestamps: true },
 );
 
-export const UserModel = mongoose.model<IUser>("User", UserSchema);
+// ✅ Prevent OverwriteModelError
+export default mongoose.models.User ||
+  mongoose.model<IUser>("User", UserSchema);
