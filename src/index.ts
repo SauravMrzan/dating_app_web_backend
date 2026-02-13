@@ -6,10 +6,14 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import { connectDatabase } from "./database/mongodb";
-import { ALLOWED_ORIGINS } from "./config";
+import { ALLOWED_ORIGINS, PORT } from "./config";
+
+// Routes
 import authRoutes from "./routes/auth.routes";
-import { PORT } from "./config";
 import adminRoutes from "./routes/admin.routes";
+import matchRoutes from "./routes/match.routes"; // ✅ fixed
+import forgotPasswordRoutes from "./routes/forgot-password.routes";
+import resetPasswordRoutes from "./routes/reset-password.routes";
 
 const app: Application = express();
 
@@ -17,18 +21,19 @@ const app: Application = express();
 connectDatabase();
 
 // 2. MIDDLEWARE & SECURITY
-app.use(morgan("dev")); // Keeps your terminal logs pretty
+app.use(morgan("dev"));
 app.use(
   helmet({
-    crossOriginResourcePolicy: false, // REQUIRED: otherwise Flutter cannot load images
+    crossOriginResourcePolicy: false, // allow Flutter to load images
   }),
 );
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// 3. STATIC FILES
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-// 3. CORS CONFIGURATION
+// 4. CORS CONFIGURATION
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -42,10 +47,6 @@ app.use(
   }),
 );
 
-// 4. STATIC FILES (THE FIX)
-// We only need this ONE line. It maps /uploads URL to the ../uploads folder.
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-
 // 5. SANITIZATION MIDDLEWARE
 app.use((req: Request, res: Response, next: NextFunction) => {
   const skipFields = ["email", "password", "profilePicture"];
@@ -53,11 +54,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const sanitize = (obj: any): any => {
     if (obj && typeof obj === "object" && !Array.isArray(obj)) {
       for (const key in obj) {
-        if (skipFields.includes(key) || typeof obj[key] !== "string") {
-          continue;
-        }
+        if (skipFields.includes(key) || typeof obj[key] !== "string") continue;
         let value = obj[key];
-        value = value.replace(/\$/g, ""); // Anti-NoSQL
+        value = value.replace(/\$/g, ""); // Anti-NoSQL injection
         if (!value.includes("@")) {
           value = value.replace(/</g, "&lt;").replace(/>/g, "&gt;"); // Anti-XSS
         }
@@ -85,6 +84,9 @@ const limiter = rateLimit({
 app.use("/api/", limiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/match", matchRoutes);
+app.use("/api/forgot-password", forgotPasswordRoutes);
+app.use("/api/reset-password", resetPasswordRoutes);
 
 app.get("/", (req, res) => {
   res.status(200).json({ success: true, message: "🚀 MannMilap API is live" });
