@@ -12,6 +12,7 @@ router.get("/users", protect, isAdmin, (req, res) =>
 );
 
 // 2. POST /api/admin/users -> Create user with Image (Uses Multer)
+// ✅ Controller enforces interestedIn validation
 router.post(
   "/users",
   protect,
@@ -26,6 +27,7 @@ router.get("/users/:id", protect, isAdmin, (req, res) =>
 );
 
 // 4. PUT /api/admin/users/:id -> Update user with optional Image
+// ✅ Controller enforces interestedIn validation
 router.put(
   "/users/:id",
   protect,
@@ -39,7 +41,8 @@ router.delete("/users/:id", protect, isAdmin, (req, res) =>
   adminController.deleteUser(req, res),
 );
 
-// Dashboard stats for the dummy frontend table/cards
+// Dashboard stats for the frontend table/cards
+// ✅ Controller includes interestedIn in recentActivity
 router.get("/dashboard-stats", protect, isAdmin, (req, res) =>
   adminController.getDashboardStats(req, res),
 );

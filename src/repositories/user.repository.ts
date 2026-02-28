@@ -18,6 +18,11 @@ export interface IUserRepository {
 
 export class UserRepository implements IUserRepository {
   async createUser(userData: Partial<IUser>): Promise<IUser> {
+    // ✅ Ensure interestedIn is always included
+    if (!userData.interestedIn) {
+      throw new Error("interestedIn is required when creating a user");
+    }
+
     const user = new UserModel(userData);
     return await user.save();
   }
@@ -34,7 +39,6 @@ export class UserRepository implements IUserRepository {
     return await UserModel.find();
   }
 
-  // Pagination + Sorting + Filtering
   async getPaginatedUsers(
     page: number,
     limit: number,
@@ -44,13 +48,12 @@ export class UserRepository implements IUserRepository {
   ): Promise<{ users: IUser[]; total: number }> {
     const skip = (page - 1) * limit;
 
-    // Build query dynamically from filters
     const query: any = {};
     if (filters.role) query.role = filters.role;
     if (filters.culture) query.culture = filters.culture;
     if (filters.gender) query.gender = filters.gender;
+    if (filters.interestedIn) query.interestedIn = filters.interestedIn; // ✅ allow filtering by interestedIn
 
-    // Sorting
     const sort: any = {};
     sort[sortField] = sortOrder === "asc" ? 1 : -1;
 
@@ -70,6 +73,11 @@ export class UserRepository implements IUserRepository {
     id: string,
     updateData: Partial<IUser>,
   ): Promise<IUser | null> {
+    // ✅ Ensure interestedIn is not dropped during update
+    if (updateData.interestedIn === undefined) {
+      throw new Error("interestedIn must be provided when updating a user");
+    }
+
     return await UserModel.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,

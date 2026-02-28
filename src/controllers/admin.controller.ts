@@ -3,6 +3,7 @@ import { UserRepository } from "../repositories/user.repository";
 import { AuthService } from "../services/auth.service";
 import { CreateUserDTO, updateUserDTO } from "../dtos/auth.dto";
 import { UserModel } from "../models/user.model";
+import { MatchModel } from "../models/match.model"; // ✅ added import
 
 const userRepository = new UserRepository();
 const authService = new AuthService();
@@ -20,14 +21,21 @@ export class AdminController {
           .json({ success: false, errors: parsed.error.format() });
       }
 
-      // ✅ Normalize preferredCulture
+      if (!parsed.data.interestedIn) {
+        return res.status(400).json({
+          success: false,
+          message: "interestedIn is required",
+          errors: ["interestedIn must be provided"],
+        });
+      }
+
       const normalizedPreferredCulture = Array.isArray(
         parsed.data.preferredCulture,
       )
         ? parsed.data.preferredCulture
         : parsed.data.preferredCulture
-          ? [parsed.data.preferredCulture]
-          : [];
+        ? [parsed.data.preferredCulture]
+        : [];
 
       const userData = {
         ...parsed.data,
@@ -58,14 +66,21 @@ export class AdminController {
           .json({ success: false, errors: parsed.error.format() });
       }
 
-      // ✅ Normalize preferredCulture
+      if (!parsed.data.interestedIn) {
+        return res.status(400).json({
+          success: false,
+          message: "interestedIn is required",
+          errors: ["interestedIn must be provided"],
+        });
+      }
+
       const normalizedPreferredCulture = Array.isArray(
         parsed.data.preferredCulture,
       )
         ? parsed.data.preferredCulture
         : parsed.data.preferredCulture
-          ? [parsed.data.preferredCulture]
-          : [];
+        ? [parsed.data.preferredCulture]
+        : [];
 
       const updateData: any = {
         ...parsed.data,
@@ -99,6 +114,7 @@ export class AdminController {
       if (req.query.role) filters.role = req.query.role;
       if (req.query.culture) filters.culture = req.query.culture;
       if (req.query.gender) filters.gender = req.query.gender;
+      if (req.query.interestedIn) filters.interestedIn = req.query.interestedIn;
 
       const { users, total } = await userRepository.getPaginatedUsers(
         page,
@@ -166,14 +182,32 @@ export class AdminController {
         createdAt: { $gte: startOfToday },
       });
 
+      // ✅ Added stats for charts
+      const totalMatches = await MatchModel.countDocuments({ isMutual: true });
+
+      const cultureStats = await UserModel.aggregate([
+        { $group: { _id: "$culture", count: { $sum: 1 } } },
+      ]);
+
+      const genderStats = await UserModel.aggregate([
+        { $group: { _id: "$gender", count: { $sum: 1 } } },
+      ]);
+
       const recentActivity = await UserModel.find()
         .sort({ updatedAt: -1 })
         .limit(5)
-        .select("fullName updatedAt role");
+        .select("fullName updatedAt role interestedIn");
 
       res.status(200).json({
         success: true,
-        stats: { totalUsers, newToday, activeAdmins },
+        stats: {
+          totalUsers,
+          newToday,
+          activeAdmins,
+          totalMatches,
+          cultureStats,
+          genderStats,
+        },
         recentActivity,
       });
     } catch (error: any) {

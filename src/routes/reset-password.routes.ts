@@ -4,6 +4,7 @@ import { ResetPasswordController } from "../controllers/reset-password.controlle
 const router = Router();
 const resetPasswordController = new ResetPasswordController();
 
+// ✅ Reset password using token
 router.post("/:token", (req, res) =>
   resetPasswordController.resetPassword(req, res),
 );

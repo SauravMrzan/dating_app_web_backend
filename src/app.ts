@@ -1,3 +1,4 @@
+// app.ts
 import express, { Application, NextFunction, Request, Response } from "express";
 import bodyParser from "body-parser";
 import helmet from "helmet";
@@ -11,8 +12,13 @@ import { ALLOWED_ORIGINS } from "./config";
 import authRoutes from "./routes/auth.routes";
 import adminRoutes from "./routes/admin.routes";
 import matchRoutes from "./routes/match.routes";
+import userRoutes from "./routes/user.routes";
 import forgotPasswordRoutes from "./routes/forgot-password.routes";
 import resetPasswordRoutes from "./routes/reset-password.routes";
+import chatRoutes from "./routes/chat.routes";
+
+// Middleware
+import { profileCompletionMiddleware } from "./middleware/profile-completion.middleware";
 
 const app: Application = express();
 
@@ -79,8 +85,13 @@ app.use("/api/", limiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/match", matchRoutes);
+app.use("/api/user", userRoutes);
 app.use("/api/forgot-password", forgotPasswordRoutes);
 app.use("/api/reset-password", resetPasswordRoutes);
+app.use("/api/chat", chatRoutes);
+
+// Apply profile completion middleware to discovery route
+app.use("/api/match/discovery", profileCompletionMiddleware, matchRoutes);
 
 app.get("/", (req, res) => {
   res.status(200).json({ success: true, message: "🚀 MannMilap API is live" });
@@ -96,4 +107,4 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-export default app; // ✅ Export app for tests
+export default app;
