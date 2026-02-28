@@ -4,6 +4,7 @@ import { ForgotPasswordController } from "../controllers/forgot-password.control
 const router = Router();
 const forgotPasswordController = new ForgotPasswordController();
 
+// ✅ Request password reset email
 router.post("/", (req, res) =>
   forgotPasswordController.forgotPassword(req, res),
 );
