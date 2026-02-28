@@ -1,73 +1,76 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-const UserSchema: Schema = new Schema<IUser>(
+export interface IUser extends Document {
+  _id: mongoose.Types.ObjectId;
+  fullName: string;
+  email: string;
+  password: string;
+  phone?: string;
+  gender: "Male" | "Female" | "Other";
+  dateOfBirth: Date;
+  culture: "Brahmin" | "Chhetri" | "Newar" | "Rai" | "Magar" | "Gurung";
+  interestedIn: "Male" | "Female" | "Everyone";
+  preferredCulture: Array<
+    "Brahmin" | "Chhetri" | "Newar" | "Rai" | "Magar" | "Gurung"
+  >;
+  minPreferredAge: number;
+  maxPreferredAge: number;
+  role: "user" | "admin";
+
+  // Profile fields
+  bio?: string;
+  interests?: string[];
+  height?: number;
+  zodiac?: string;
+  education?: string;
+  familyPlan?: string;
+  photos?: string[]; // multiple photos
+
+  isDeleted: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const UserSchema: Schema<IUser> = new Schema<IUser>(
   {
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
-
-    // Basic Info
     fullName: { type: String, required: true, trim: true },
     phone: { type: String, trim: true },
-
-    // Identity
-    gender: {
-      type: String,
-      enum: ["Male", "Female", "Other"],
-    },
-
-    dateOfBirth: {
-      type: Date,
-    },
-
+    gender: { type: String, enum: ["Male", "Female", "Other"], required: true },
+    dateOfBirth: { type: Date, required: true },
     culture: {
       type: String,
       enum: ["Brahmin", "Chhetri", "Newar", "Rai", "Magar", "Gurung"],
+      required: true,
     },
-
-    // Preferences
     interestedIn: {
       type: String,
       enum: ["Male", "Female", "Everyone"],
+      required: true, // ✅ enforce required so frontend must send it
     },
-
     preferredCulture: [
       {
         type: String,
         enum: ["Brahmin", "Chhetri", "Newar", "Rai", "Magar", "Gurung"],
       },
     ],
+    minPreferredAge: { type: Number, default: 18 },
+    maxPreferredAge: { type: Number, default: 99 },
 
-    minPreferredAge: { type: Number },
-    maxPreferredAge: { type: Number },
+    // Profile
+    bio: { type: String, trim: true },
+    interests: [{ type: String }],
+    height: { type: Number },
+    zodiac: { type: String },
+    education: { type: String },
+    familyPlan: { type: String },
+    photos: [{ type: String }], // multiple photos
 
-    // System
-    role: {
-      type: String,
-      enum: ["user", "admin"],
-      default: "user",
-    },
-    profilePicture: { type: String, required: false },
+    role: { type: String, enum: ["user", "admin"], default: "user" },
+    isDeleted: { type: Boolean, default: false },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
-
-export interface IUser extends mongoose.Document {
-  _id: mongoose.Types.ObjectId;
-  fullName: string;
-  email: string;
-  password: string;
-  gender: 'Male' | 'Female' | 'Other';
-  dateOfBirth: Date; 
-  phone: string;
-  culture: 'Brahmin' | 'Chhetri' | 'Newar' | 'Rai' | 'Magar' | 'Gurung';
-  interestedIn: 'Male' | 'Female' | 'Everyone';
-  preferredCulture: Array<'Brahmin' | 'Chhetri' | 'Newar' | 'Rai' | 'Magar' | 'Gurung'>;
-  minPreferredAge: number;
-  maxPreferredAge: number;
-  role: 'user' | 'admin';
-  profilePicture?: string; 
-}
 
 export const UserModel = mongoose.model<IUser>("User", UserSchema);
