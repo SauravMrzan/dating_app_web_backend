@@ -7,7 +7,10 @@ const router = Router();
 const authController = new AuthController();
 
 // Public Routes
-router.post("/register", (req, res) => authController.register(req, res));
+// Public Routes
+router.post("/register", uploads.array("photos", 3), (req, res) =>
+  authController.register(req, res),
+);
 router.post("/login", (req, res) => authController.login(req, res));
 
 // Protected Routes

@@ -40,7 +40,7 @@ export class AdminController {
       const userData = {
         ...parsed.data,
         preferredCulture: normalizedPreferredCulture,
-        profilePicture: req.file ? `uploads/${req.file.filename}` : undefined,
+        photos: req.file ? [`uploads/${req.file.filename}`] : [],
       };
 
       const newUser = await authService.register(userData as any);
@@ -88,7 +88,7 @@ export class AdminController {
       };
 
       if (req.file) {
-        updateData.profilePicture = `uploads/${req.file.filename}`;
+        updateData.photos = [`uploads/${req.file.filename}`];
       }
 
       const updatedUser = await authService.updateUser(id, updateData);

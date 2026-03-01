@@ -16,6 +16,8 @@ import userRoutes from "./routes/user.routes";
 import forgotPasswordRoutes from "./routes/forgot-password.routes";
 import resetPasswordRoutes from "./routes/reset-password.routes";
 import chatRoutes from "./routes/chat.routes";
+import notificationRoutes from "./routes/notification.routes";
+import reportRoutes from "./routes/report.routes";
 
 // Middleware
 import { profileCompletionMiddleware } from "./middleware/profile-completion.middleware";
@@ -105,6 +107,8 @@ app.use("/api/user", userRoutes);
 app.use("/api/forgot-password", forgotPasswordRoutes);
 app.use("/api/reset-password", resetPasswordRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/reports", reportRoutes);
 
 // Apply profile completion middleware to discovery route
 app.use("/api/match/discovery", profileCompletionMiddleware, matchRoutes);

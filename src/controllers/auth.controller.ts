@@ -26,15 +26,13 @@ export class AuthController {
         });
       }
 
-      const validatedData = parsedData.data;
+      const validatedData = { ...parsedData.data };
 
-      // ✅ Ensure interestedIn is present
-      if (!validatedData.interestedIn) {
-        return res.status(400).json({
-          success: false,
-          message: "interestedIn is required",
-          errors: ["interestedIn must be provided"],
-        });
+      // ✅ Handle multiple photo uploads during registration
+      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        validatedData.photos = (req.files as Express.Multer.File[]).map(
+          (file) => `uploads/${file.filename}`,
+        );
       }
 
       const user = await authService.register(validatedData);
@@ -155,10 +153,21 @@ export class AuthController {
       const updateData = { ...parsedData.data };
 
       // ✅ Handle multiple photo uploads
-      if (req.files && Array.isArray(req.files)) {
-        updateData.photos = (req.files as Express.Multer.File[]).map(
+      let finalPhotos = parsedData.data.photos || undefined;
+
+      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        const newPhotos = (req.files as Express.Multer.File[]).map(
           (file) => `uploads/${file.filename}`,
         );
+        // Merge with existing photos if provided in body, else merge with current user's photos in service
+        finalPhotos = [...(parsedData.data.photos || []), ...newPhotos].slice(
+          0,
+          3,
+        );
+      }
+
+      if (finalPhotos !== undefined) {
+        updateData.photos = finalPhotos;
       }
 
       const updatedUser = await authService.updateUser(userId, updateData);
