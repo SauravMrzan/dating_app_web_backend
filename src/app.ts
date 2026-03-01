@@ -70,13 +70,29 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+// Trust proxy (required if behind Nginx or Load Balancer)
+app.set("trust proxy", 1);
+
 // Rate limiter
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: {
-    success: false,
-    message: "Too many requests, please try again later.",
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Increased for better UX during testing
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request): string => {
+    // If user is authenticated, use their ID as the key to allow multiple users on same IP
+    const userId = (req as any).user?._id || (req as any).user?.id;
+    if (userId) {
+      return `user_${userId}`;
+    }
+    // Fallback to IP or Authorization header for public/unauthenticated routes
+    return (req.headers.authorization || req.ip || "anonymous").toString();
+  },
+  handler: (req, res, next, options) => {
+    res.status(options.statusCode).json({
+      success: false,
+      message: "Too many requests, please try again later.",
+    });
   },
 });
 

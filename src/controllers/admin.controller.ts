@@ -34,8 +34,8 @@ export class AdminController {
       )
         ? parsed.data.preferredCulture
         : parsed.data.preferredCulture
-        ? [parsed.data.preferredCulture]
-        : [];
+          ? [parsed.data.preferredCulture]
+          : [];
 
       const userData = {
         ...parsed.data,
@@ -79,8 +79,8 @@ export class AdminController {
       )
         ? parsed.data.preferredCulture
         : parsed.data.preferredCulture
-        ? [parsed.data.preferredCulture]
-        : [];
+          ? [parsed.data.preferredCulture]
+          : [];
 
       const updateData: any = {
         ...parsed.data,

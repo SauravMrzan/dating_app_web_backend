@@ -17,10 +17,15 @@ export class ChatService {
       throw new HttpError(403, "You can only chat with mutual matches.");
     }
 
+    // Correctly determine toUser by comparing ObjectIds as strings
+    const matchFromUserId = match.fromUser.toString();
+    const currentFromUserId = fromUserId.toString();
+
     const toUser =
-      match.fromUser.toString() === fromUserId ? match.toUser : match.fromUser;
+      matchFromUserId === currentFromUserId ? match.toUser : match.fromUser;
 
     const chatDoc = await ChatModel.create({
+      matchId: conversationId,
       fromUser: fromUserId,
       toUser,
       message,
@@ -44,11 +49,9 @@ export class ChatService {
       throw new HttpError(403, "You can only view chats with mutual matches.");
     }
 
+    // Use matchId for reliable and performant querying
     const messages = await ChatModel.find({
-      $or: [
-        { fromUser: match.fromUser, toUser: match.toUser },
-        { fromUser: match.toUser, toUser: match.fromUser },
-      ],
+      matchId: conversationId,
     })
       .sort({ createdAt: 1 })
       .populate("fromUser", "fullName")

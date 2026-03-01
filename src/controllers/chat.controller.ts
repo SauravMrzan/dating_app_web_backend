@@ -25,6 +25,13 @@ export class ChatController {
         message,
       );
 
+      // ✅ Emit the message via Socket.IO to the conversation room
+      const { getIO } = require("../sockets/chat.socket");
+      const io = getIO();
+      if (io) {
+        io.to(conversationId).emit("newMessage", chat);
+      }
+
       return res.status(201).json({
         success: true,
         message: "Message sent successfully",
