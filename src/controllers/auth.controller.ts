@@ -154,15 +154,6 @@ export class AuthController {
 
       const updateData = { ...parsedData.data };
 
-      // ✅ Ensure interestedIn is not dropped
-      if (!updateData.interestedIn) {
-        return res.status(400).json({
-          success: false,
-          message: "interestedIn is required",
-          errors: ["interestedIn must be provided"],
-        });
-      }
-
       // ✅ Handle multiple photo uploads
       if (req.files && Array.isArray(req.files)) {
         updateData.photos = (req.files as Express.Multer.File[]).map(

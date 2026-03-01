@@ -11,7 +11,8 @@ describe("User Management", () => {
       gender: "Male",
       dateOfBirth: "2000-01-01",
       culture: "Newar",
-      role: "user", 
+      interestedIn: "Female",
+      role: "user",
     });
     expect(res.status).toBe(201);
   });

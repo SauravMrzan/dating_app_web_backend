@@ -87,7 +87,34 @@ export const LoginUserDTO = z.object({
 export type LoginUserDTO = z.infer<typeof LoginUserDTO>;
 
 export const updateUserDTO = CreateUserDTO.partial().extend({
-  bio: z.string().min(10, "Bio must be at least 10 characters"),
+  bio: z.string().min(10, "Bio must be at least 10 characters").optional(),
   role: z.enum(["user", "admin"]).optional(),
+  // Override fields with defaults to ensure they are NOT reset if missing
+  interests: z
+    .preprocess((val) => {
+      if (typeof val === "string") {
+        try {
+          return JSON.parse(val);
+        } catch {
+          return val.split(",").map((s) => s.trim());
+        }
+      }
+      return val;
+    }, z.array(z.string()))
+    .optional(),
+  preferredCulture: z
+    .preprocess((val) => {
+      if (typeof val === "string") {
+        try {
+          return JSON.parse(val);
+        } catch {
+          return [val]; // fallback: single string
+        }
+      }
+      return val;
+    }, z.array(z.enum(["Brahmin", "Chhetri", "Newar", "Rai", "Magar", "Gurung"])))
+    .optional(),
+  minPreferredAge: z.coerce.number().min(18).optional(),
+  maxPreferredAge: z.coerce.number().max(100).optional(),
 });
 export type UpdateUserDTO = z.infer<typeof updateUserDTO>;

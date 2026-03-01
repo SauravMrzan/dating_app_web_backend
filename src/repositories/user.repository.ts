@@ -73,11 +73,6 @@ export class UserRepository implements IUserRepository {
     id: string,
     updateData: Partial<IUser>,
   ): Promise<IUser | null> {
-    // ✅ Ensure interestedIn is not dropped during update
-    if (updateData.interestedIn === undefined) {
-      throw new Error("interestedIn must be provided when updating a user");
-    }
-
     return await UserModel.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
