@@ -12,6 +12,7 @@ router.post("/register", uploads.array("photos", 3), (req, res) =>
   authController.register(req, res),
 );
 router.post("/login", (req, res) => authController.login(req, res));
+router.get("/options", (req, res) => authController.getAuthOptions(req, res));
 
 // Protected Routes
 router.get("/whoami", authorizedMiddleware, (req, res) =>

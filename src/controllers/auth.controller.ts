@@ -1,16 +1,131 @@
 import { AuthService } from "../services/auth.service";
 import { CreateUserDTO, LoginUserDTO, updateUserDTO } from "../dtos/auth.dto";
 import { Request, Response } from "express";
+import {
+  CULTURES,
+  GENDERS,
+  INTERESTED_IN_OPTIONS,
+} from "../constants/user-options";
 
 const authService = new AuthService();
 
+const parseMaybeArrayString = (value: string): any[] | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch {}
+
+  try {
+    const normalizedQuotes = trimmed.replace(/'/g, '"');
+    const parsed = JSON.parse(normalizedQuotes);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch {}
+
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+    const inner = trimmed.slice(1, -1).trim();
+    if (!inner) return [];
+
+    return inner
+      .split(",")
+      .map((item) => item.trim().replace(/^['\"]|['\"]$/g, ""))
+      .filter(Boolean);
+  }
+
+  return null;
+};
+
+const normalizeArrayField = (body: Record<string, any>, fieldName: string) => {
+  const rawValue = body[fieldName];
+
+  if (rawValue === undefined || rawValue === null || rawValue === "") {
+    delete body[fieldName];
+    return;
+  }
+
+  if (Array.isArray(rawValue)) {
+    body[fieldName] = rawValue
+      .map((item) => (typeof item === "string" ? item.trim() : item))
+      .filter((item) => item !== "" && item !== undefined && item !== null);
+    return;
+  }
+
+  if (typeof rawValue === "string") {
+    const trimmed = rawValue.trim();
+
+    const maybeArray = parseMaybeArrayString(trimmed);
+    if (maybeArray) {
+      body[fieldName] = maybeArray
+        .map((item) => (typeof item === "string" ? item.trim() : item))
+        .filter((item) => item !== "" && item !== undefined && item !== null);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        body[fieldName] = parsed
+          .map((item) => (typeof item === "string" ? item.trim() : item))
+          .filter((item) => item !== "" && item !== undefined && item !== null);
+        return;
+      }
+    } catch {
+      body[fieldName] = trimmed ? [trimmed] : [];
+      return;
+    }
+  }
+
+  body[fieldName] = [rawValue];
+};
+
+const normalizeCultureField = (body: Record<string, any>, fieldName: string) => {
+  const rawValue = body[fieldName];
+
+  if (rawValue === undefined || rawValue === null || rawValue === "") {
+    delete body[fieldName];
+    return;
+  }
+
+  if (Array.isArray(rawValue)) {
+    body[fieldName] = rawValue[0];
+    return;
+  }
+
+  if (typeof rawValue === "string") {
+    const trimmed = rawValue.trim();
+    const maybeArray = parseMaybeArrayString(trimmed);
+    if (maybeArray && maybeArray.length > 0) {
+      body[fieldName] = maybeArray[0];
+      return;
+    }
+    body[fieldName] = trimmed;
+  }
+};
+
 export class AuthController {
+  async getAuthOptions(req: Request, res: Response) {
+    return res.status(200).json({
+      success: true,
+      data: {
+        cultures: [...CULTURES],
+        genders: [...GENDERS],
+        interestedIn: [...INTERESTED_IN_OPTIONS],
+      },
+    });
+  }
+
   /**
    * Register a new user
    */
   async register(req: Request, res: Response) {
     try {
-      const parsedData = CreateUserDTO.safeParse(req.body);
+      const payload = { ...(req.body || {}) };
+      normalizeCultureField(payload, "culture");
+      normalizeArrayField(payload, "preferredCulture");
+
+      const parsedData = CreateUserDTO.safeParse(payload);
 
       if (!parsedData.success) {
         const flat = parsedData.error.flatten();
@@ -135,7 +250,18 @@ export class AuthController {
         });
       }
 
-      const parsedData = updateUserDTO.safeParse(req.body);
+      const sanitizedBody = Object.fromEntries(
+        Object.entries(req.body || {}).filter(([, value]) => {
+          if (value === undefined || value === null) return false;
+          if (typeof value === "string" && value.trim() === "") return false;
+          return true;
+        }),
+      );
+
+      normalizeCultureField(sanitizedBody, "culture");
+      normalizeArrayField(sanitizedBody, "preferredCulture");
+
+      const parsedData = updateUserDTO.safeParse(sanitizedBody);
       if (!parsedData.success) {
         const flat = parsedData.error.flatten();
         const errorMessages = [

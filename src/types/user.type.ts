@@ -1,4 +1,12 @@
 import mongoose, { Document, Schema } from "mongoose";
+import {
+  CULTURES,
+  GENDERS,
+  INTERESTED_IN_OPTIONS,
+  Culture,
+  Gender,
+  InterestedIn,
+} from "../constants/user-options";
 
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId;
@@ -6,13 +14,11 @@ export interface IUser extends Document {
   email: string;
   password: string;
   phone?: string;
-  gender: "Male" | "Female" | "Other";
+  gender: Gender;
   dateOfBirth: Date;
-  culture: "Brahmin" | "Chhetri" | "Newar" | "Rai" | "Magar" | "Gurung";
-  interestedIn: "Male" | "Female" | "Everyone";
-  preferredCulture: Array<
-    "Brahmin" | "Chhetri" | "Newar" | "Rai" | "Magar" | "Gurung"
-  >;
+  culture: Culture;
+  interestedIn: InterestedIn;
+  preferredCulture: Array<Culture>;
   minPreferredAge: number;
   maxPreferredAge: number;
   role: "user" | "admin";
@@ -37,22 +43,22 @@ const UserSchema: Schema<IUser> = new Schema<IUser>(
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     dateOfBirth: { type: Date, required: true },
-    gender: { type: String, enum: ["Male", "Female", "Other"], required: true },
+    gender: { type: String, enum: GENDERS, required: true },
     phone: { type: String, trim: true },
     culture: {
       type: String,
-      enum: ["Brahmin", "Chhetri", "Newar", "Rai", "Magar", "Gurung"],
+      enum: CULTURES,
       required: true,
     },
     interestedIn: {
       type: String,
-      enum: ["Male", "Female", "Everyone"],
+      enum: INTERESTED_IN_OPTIONS,
       default: "Everyone",
     },
     preferredCulture: [
       {
         type: String,
-        enum: ["Brahmin", "Chhetri", "Newar", "Rai", "Magar", "Gurung"],
+        enum: CULTURES,
       },
     ],
     minPreferredAge: { type: Number, default: 18 },

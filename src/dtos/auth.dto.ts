@@ -1,4 +1,37 @@
 import z from "zod";
+import {
+  CULTURES,
+  GENDERS,
+  INTERESTED_IN_OPTIONS,
+} from "../constants/user-options";
+
+const CULTURE_ENUM = z.enum(CULTURES);
+const GENDER_ENUM = z.enum(GENDERS);
+const INTERESTED_IN_ENUM = z.enum(INTERESTED_IN_OPTIONS);
+
+const normalizeCultureValue = z.preprocess((val) => {
+  if (Array.isArray(val)) {
+    return val[0];
+  }
+
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+
+    if (!trimmed) return trimmed;
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed[0];
+      }
+      return parsed;
+    } catch {
+      return trimmed;
+    }
+  }
+
+  return val;
+}, CULTURE_ENUM);
 
 export const CreateUserDTO = z.object({
   email: z.string().email("Invalid email address"),
@@ -8,7 +41,7 @@ export const CreateUserDTO = z.object({
     .string()
     .min(10)
     .regex(/^[0-9+]+$/, "Phone must contain only numbers and +"),
-  gender: z.enum(["Male", "Female", "Other"]),
+  gender: GENDER_ENUM,
   dateOfBirth: z.coerce.date().refine((date) => {
     const today = new Date();
     let age = today.getFullYear() - date.getFullYear();
@@ -22,26 +55,12 @@ export const CreateUserDTO = z.object({
     return age >= 18;
   }, "You must be at least 18 years old"),
 
-  culture: z.enum(["Brahmin", "Chhetri", "Newar", "Rai", "Magar", "Gurung"]),
+  culture: normalizeCultureValue,
 
   // ✅ Added interestedIn
-  interestedIn: z.enum(["Male", "Female", "Everyone"]),
+  interestedIn: INTERESTED_IN_ENUM,
 
-  preferredCulture: z.preprocess(
-    (val) => {
-      if (typeof val === "string") {
-        try {
-          return JSON.parse(val);
-        } catch {
-          return [val]; // fallback: single string
-        }
-      }
-      return val;
-    },
-    z
-      .array(z.enum(["Brahmin", "Chhetri", "Newar", "Rai", "Magar", "Gurung"]))
-      .default([]),
-  ),
+  preferredCulture: z.array(CULTURE_ENUM).default([]),
 
   minPreferredAge: z.coerce.number().min(18).default(18),
   maxPreferredAge: z.coerce.number().max(100).default(99),
@@ -102,18 +121,7 @@ export const updateUserDTO = CreateUserDTO.partial().extend({
       return val;
     }, z.array(z.string()))
     .optional(),
-  preferredCulture: z
-    .preprocess((val) => {
-      if (typeof val === "string") {
-        try {
-          return JSON.parse(val);
-        } catch {
-          return [val]; // fallback: single string
-        }
-      }
-      return val;
-    }, z.array(z.enum(["Brahmin", "Chhetri", "Newar", "Rai", "Magar", "Gurung"])))
-    .optional(),
+  preferredCulture: z.array(CULTURE_ENUM).optional(),
   minPreferredAge: z.coerce.number().min(18).optional(),
   maxPreferredAge: z.coerce.number().max(100).optional(),
 });
