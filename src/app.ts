@@ -29,8 +29,12 @@ app.use(morgan("dev"));
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+    dnsPrefetchControl: false,
   }),
 );
+// Disable ETag to avoid 304 Not Modified responses
+app.set("etag", false);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -50,6 +54,14 @@ app.use(
     credentials: true,
   }),
 );
+
+// Prevent caching of API responses
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
 
 // Sanitization middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
